@@ -10,6 +10,7 @@ import random
 import numpy as np
 import torch
 from pathlib import Path
+from typing import Dict, Optional
 from transformers import (
     AutoModelForCausalLM,
     AutoTokenizer,
@@ -22,6 +23,13 @@ from peft import LoraConfig, get_peft_model, PeftModel
 # 导入 baselines 中的工具函数
 from baselines.utils.model_utils import find_all_linear_names, setup_lora, load_model
 from baselines.data.dataset import UnlearnDataset
+
+# 导入配置工具
+import sys
+from pathlib import Path
+project_root = Path(__file__).parent.parent
+sys.path.insert(0, str(project_root))
+from src.utils.config_utils import load_model_config, format_qa_text
 
 
 def set_seed(seed):
@@ -40,8 +48,10 @@ def parse_args():
     )
     
     # 模型配置
-    parser.add_argument("--model_name", type=str, required=True,
-                       help="基础模型名称或路径")
+    parser.add_argument("--model_name", type=str, default=None,
+                       help="基础模型名称或路径（如果指定了 model_family 则忽略）")
+    parser.add_argument("--model_family", type=str, default=None,
+                       help="模型家族名称（从 config/model_config.yaml 读取配置）")
     parser.add_argument("--use_lora", action="store_true",
                        help="是否使用 LoRA")
     parser.add_argument("--lora_r", type=int, default=8,
@@ -52,10 +62,10 @@ def parse_args():
                        help="LoRA dropout")
     parser.add_argument("--lora_target_modules", type=str, nargs="+", default=None,
                        help="LoRA target modules（None 则自动查找）")
-    parser.add_argument("--use_flash_attention", action="store_true",
-                       help="是否使用 flash attention")
-    parser.add_argument("--gradient_checkpointing", action="store_true",
-                       help="是否启用梯度检查点")
+    parser.add_argument("--use_flash_attention", action="store_true", default=None,
+                       help="是否使用 flash attention（如果指定了 model_family 则从配置读取）")
+    parser.add_argument("--gradient_checkpointing", action="store_true", default=None,
+                       help="是否启用梯度检查点（如果指定了 model_family 则从配置读取）")
     
     # 数据配置
     parser.add_argument("--data_path", type=str, required=True,
@@ -120,11 +130,13 @@ class FinetuneDataset:
         max_length: int = 512,
         question_key: str = "question",
         answer_key: str = "answer",
+        model_config: Optional[Dict] = None,
     ):
         self.tokenizer = tokenizer
         self.max_length = max_length
         self.question_key = question_key
         self.answer_key = answer_key
+        self.model_config = model_config
         
         # 加载数据
         self.data = self._load_data(data_path)
@@ -176,6 +188,10 @@ class FinetuneDataset:
     
     def _format_text(self, question: str, answer: str) -> str:
         """格式化文本"""
+        # 如果提供了 model_config，使用配置中的模板
+        if hasattr(self, 'model_config') and self.model_config:
+            return format_qa_text(question, answer, self.model_config, use_chat_template=False)
+        
         # 对于 chat 模型，使用 chat template
         if hasattr(self.tokenizer, 'apply_chat_template'):
             messages = [
@@ -201,27 +217,55 @@ def main():
     # 创建输出目录
     Path(args.output_dir).mkdir(parents=True, exist_ok=True)
     
+    # 加载模型配置（如果指定了 model_family）
+    model_config = None
+    if args.model_family:
+        try:
+            model_config = load_model_config(args.model_family)
+            print(f"加载模型配置: {args.model_family}")
+            print(f"  Model: {model_config['hf_key']}")
+            print(f"  Flash Attention: {model_config['flash_attention2']}")
+            print(f"  Gradient Checkpointing: {model_config['gradient_checkpointing']}")
+        except Exception as e:
+            print(f"警告: 无法加载模型配置 '{args.model_family}': {e}")
+            print("将使用命令行参数中的配置")
+            model_config = None
+    
+    # 确定模型名称和设置
+    if model_config:
+        model_name = model_config['hf_key']
+        use_flash_attention = args.use_flash_attention if args.use_flash_attention is not None else (model_config['flash_attention2'] == "true")
+        use_gradient_checkpointing = args.gradient_checkpointing if args.gradient_checkpointing is not None else (model_config['gradient_checkpointing'] == "true")
+    else:
+        if args.model_name is None:
+            raise ValueError("必须指定 --model_name 或 --model_family")
+        model_name = args.model_name
+        use_flash_attention = args.use_flash_attention if args.use_flash_attention is not None else False
+        use_gradient_checkpointing = args.gradient_checkpointing if args.gradient_checkpointing is not None else False
+    
     # 保存配置
     config_dict = vars(args)
+    if model_config:
+        config_dict['model_config'] = model_config
     with open(os.path.join(args.output_dir, "config.json"), "w") as f:
         json.dump(config_dict, f, indent=2)
     
     # 加载 tokenizer
-    tokenizer = AutoTokenizer.from_pretrained(args.model_name, trust_remote_code=True)
+    tokenizer = AutoTokenizer.from_pretrained(model_name, trust_remote_code=True)
     if tokenizer.pad_token is None:
         tokenizer.pad_token = tokenizer.eos_token
     tokenizer.padding_side = "left"
     
     # 加载模型
     model = AutoModelForCausalLM.from_pretrained(
-        args.model_name,
+        model_name,
         torch_dtype=torch.bfloat16 if args.bf16 else torch.float16 if args.fp16 else torch.float32,
         trust_remote_code=True,
-        attn_implementation="flash_attention_2" if args.use_flash_attention else None,
+        attn_implementation="flash_attention_2" if use_flash_attention else None,
     )
     
     # 启用梯度检查点
-    if args.gradient_checkpointing:
+    if use_gradient_checkpointing:
         model.gradient_checkpointing_enable()
     
     # 应用 LoRA
@@ -247,6 +291,7 @@ def main():
         max_length=args.max_length,
         question_key=args.question_key,
         answer_key=args.answer_key,
+        model_config=model_config,
     )
     
     # 计算训练步数
@@ -299,7 +344,9 @@ def main():
     
     # 训练
     print(f"开始训练")
-    print(f"模型: {args.model_name}")
+    print(f"模型: {model_name}")
+    if args.model_family:
+        print(f"模型家族: {args.model_family}")
     print(f"数据: {args.data_path} ({num_samples} 样本)")
     print(f"使用 LoRA: {args.use_lora}")
     if args.use_lora:

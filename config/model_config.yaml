@@ -1,0 +1,135 @@
+# 模型配置文件
+# 用于统一管理不同模型家族的配置信息
+
+# TOFU 数据集相关模型配置
+tofu-llama2-7b:
+  hf_key: "meta-llama/Llama-2-7b-chat-hf"
+  question_start_tag: "[INST] "
+  question_end_tag: " [/INST]"
+  answer_tag: ""
+  flash_attention2: "true"
+  gradient_checkpointing: "true"
+
+tofu-llama3-8b:
+  hf_key: "meta-llama/Meta-Llama-3-8B-Instruct"
+  question_start_tag: "<|start_header_id|>user<|end_header_id|>\n\n"
+  question_end_tag: "<|eot_id|><|start_header_id|>assistant<|end_header_id|>\n\n"
+  answer_tag: ""
+  flash_attention2: "false"
+  gradient_checkpointing: "true"
+
+tofu-gemma-2-2b-it:
+  hf_key: "google/gemma-2-2b-it"
+  question_start_tag: "<start_of_turn>"
+  question_end_tag: "<end_of_turn>"
+  answer_tag: ""
+  flash_attention2: "false"
+  gradient_checkpointing: "true"
+
+# KnowUnDo 数据集相关模型配置
+kud-llama2-7b:
+  hf_key: "meta-llama/Llama-2-7b-chat-hf"
+  question_start_tag: ""
+  question_end_tag: ""
+  answer_tag: ""
+  flash_attention2: "true"
+  gradient_checkpointing: "true"
+
+kud-llama3-8b:
+  hf_key: "meta-llama/Meta-Llama-3-8B-Instruct"
+  question_start_tag: ""
+  question_end_tag: ""
+  answer_tag: ""
+  flash_attention2: "false"
+  gradient_checkpointing: "true"
+
+kud-gemma-2-2b-it:
+  hf_key: "google/gemma-2-2b-it"
+  question_start_tag: ""
+  question_end_tag: ""
+  answer_tag: ""
+  flash_attention2: "false"
+  gradient_checkpointing: "true"
+
+# 通用模型配置
+llama2-7b-chat:
+  hf_key: "meta-llama/Llama-2-7b-chat-hf"
+  question_start_tag: "[INST] "
+  question_end_tag: " [/INST]"
+  answer_tag: ""
+  flash_attention2: "true"
+  gradient_checkpointing: "true"
+
+llama2-7b:
+  hf_key: "meta-llama/Llama-2-7b-hf"
+  question_start_tag: ""
+  question_end_tag: ""
+  answer_tag: ""
+  flash_attention2: "true"
+  gradient_checkpointing: "true"
+
+llama3-8b-instruct:
+  hf_key: "meta-llama/Meta-Llama-3-8B-Instruct"
+  question_start_tag: "<|start_header_id|>user<|end_header_id|>\n\n"
+  question_end_tag: "<|eot_id|><|start_header_id|>assistant<|end_header_id|>\n\n"
+  answer_tag: ""
+  flash_attention2: "false"
+  gradient_checkpointing: "true"
+
+llama3.2-3b-instruct:
+  hf_key: "meta-llama/Llama-3.2-3B-Instruct"
+  question_start_tag: "<|start_header_id|>user<|end_header_id|>\n\n"
+  question_end_tag: "<|eot_id|><|start_header_id|>assistant<|end_header_id|>\n\n"
+  answer_tag: ""
+  flash_attention2: "false"
+  gradient_checkpointing: "true"
+
+gemma-2-2b-it:
+  hf_key: "google/gemma-2-2b-it"
+  question_start_tag: "<start_of_turn>user\n"
+  question_end_tag: "<end_of_turn>\n<start_of_turn>model\n"
+  answer_tag: ""
+  flash_attention2: "false"
+  gradient_checkpointing: "true"
+
+qwen2.5-7b-instruct:
+  hf_key: "Qwen/Qwen2.5-7B-Instruct"
+  question_start_tag: "<|im_start|>user\n"
+  question_end_tag: "<|im_end|>\n<|im_start|>assistant\n"
+  answer_tag: ""
+  flash_attention2: "false"
+  gradient_checkpointing: "true"
+
+qwen2.5-3b-instruct:
+  hf_key: "Qwen/Qwen2.5-3B-Instruct"
+  question_start_tag: "<|im_start|>user\n"
+  question_end_tag: "<|im_end|>\n<|im_start|>assistant\n"
+  answer_tag: ""
+  flash_attention2: "false"
+  gradient_checkpointing: "true"
+
+# 其他模型
+phi-1.5:
+  hf_key: "microsoft/phi-1_5"
+  question_start_tag: "Question: "
+  question_end_tag: "\n"
+  answer_tag: "Answer: "
+  flash_attention2: "false"
+  gradient_checkpointing: "false"
+
+stablelm-3b:
+  hf_key: "stabilityai/stablelm-3b-4e1t"
+  question_start_tag: "Question: "
+  question_end_tag: "\n"
+  answer_tag: "Answer: "
+  flash_attention2: "false"
+  gradient_checkpointing: "false"
+
+pythia-1.4b:
+  hf_key: "EleutherAI/pythia-1.4b-deduped"
+  question_start_tag: "Question: "
+  question_end_tag: "\n"
+  answer_tag: "Answer: "
+  flash_attention2: "false"
+  gradient_checkpointing: "false"
+

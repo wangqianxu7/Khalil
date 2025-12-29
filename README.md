@@ -18,6 +18,7 @@ Khalil/
 │       ├── evaluator.py     # 评估器
 │       └── metrics.py       # 评估指标
 ├── config/
+│   ├── model_config.yaml    # 模型配置文件（包含各种模型的配置）
 │   ├── finetune.yaml        # Finetune 配置参考
 │   └── evaluate.yaml        # Evaluate 配置参考
 └── scripts/
@@ -33,9 +34,11 @@ Khalil/
 
 #### 基本用法
 
+**方式 1：使用模型配置（推荐）**
+
 ```bash
 python src/finetune.py \
-  --model_name meta-llama/Llama-2-7b-chat-hf \
+  --model_family llama2-7b-chat \
   --data_path data/train.jsonl \
   --output_dir outputs/finetune \
   --use_lora \
@@ -44,13 +47,42 @@ python src/finetune.py \
   --num_epochs 10
 ```
 
+使用 `--model_family` 参数，系统会自动从 `config/model_config.yaml` 读取模型配置，包括：
+- 模型路径（`hf_key`）
+- Flash Attention 设置
+- 梯度检查点设置
+- 问答模板标签
+
+**方式 2：直接指定模型名称**
+
+```bash
+python src/finetune.py \
+  --model_name meta-llama/Llama-2-7b-chat-hf \
+  --data_path data/train.jsonl \
+  --output_dir outputs/finetune \
+  --use_lora \
+  --use_flash_attention \
+  --gradient_checkpointing \
+  --lr 1e-4 \
+  --batch_size 4 \
+  --num_epochs 10
+```
+
 #### 主要参数
 
-- `--model_name`: 基础模型名称或路径
-- `--data_path`: 训练数据路径（JSON/JSONL）
-- `--output_dir`: 输出目录
+**模型配置**：
+- `--model_family`: 模型家族名称（从 `config/model_config.yaml` 读取配置，推荐使用）
+- `--model_name`: 基础模型名称或路径（如果未指定 `model_family` 则必须指定）
+- `--use_flash_attention`: 是否使用 flash attention（如果指定了 `model_family` 则从配置读取）
+- `--gradient_checkpointing`: 是否启用梯度检查点（如果指定了 `model_family` 则从配置读取）
+
+**LoRA 配置**：
 - `--use_lora`: 是否使用 LoRA
 - `--lora_r`, `--lora_alpha`, `--lora_dropout`: LoRA 参数
+
+**训练配置**：
+- `--data_path`: 训练数据路径（JSON/JSONL）
+- `--output_dir`: 输出目录
 - `--lr`: 学习率
 - `--batch_size`: 批次大小
 - `--num_epochs`: 训练轮数
@@ -154,6 +186,25 @@ python src/evaluate/main.py \
 - 模型对遗忘集和保留集的平均概率
 
 ## 配置说明
+
+### 模型配置
+
+`config/model_config.yaml` 包含了各种模型的配置信息，包括：
+- 模型路径（HuggingFace 名称或本地路径）
+- 问答模板标签（用于格式化数据）
+- Flash Attention 设置
+- 梯度检查点设置
+
+支持的模型包括：
+- `llama2-7b-chat`, `llama2-7b`
+- `llama3-8b-instruct`, `llama3.2-3b-instruct`
+- `gemma-2-2b-it`
+- `qwen2.5-7b-instruct`, `qwen2.5-3b-instruct`
+- `tofu-llama2-7b`, `tofu-llama3-8b`, `tofu-gemma-2-2b-it`
+- `kud-llama2-7b`, `kud-llama3-8b`, `kud-gemma-2-2b-it`
+- 以及其他模型
+
+使用 `--model_family` 参数时，系统会自动从配置文件读取这些设置。
 
 ### Finetune 配置
 
