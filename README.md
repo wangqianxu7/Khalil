@@ -8,15 +8,21 @@
 Khalil/
 ├── src/
 │   ├── finetune.py          # 模型微调脚本
-│   └── baselines/           # Unlearning baselines
-│       ├── main.py          # Unlearning 主入口
-│       ├── trainer/         # 各种 unlearning 方法
-│       ├── utils/           # 工具函数
-│       └── data/            # 数据集类
+│   ├── baselines/           # Unlearning baselines
+│   │   ├── main.py          # Unlearning 主入口
+│   │   ├── trainer/         # 各种 unlearning 方法
+│   │   ├── utils/           # 工具函数
+│   │   └── data/            # 数据集类
+│   └── evaluate/            # 评估模块
+│       ├── main.py          # 评估主入口
+│       ├── evaluator.py     # 评估器
+│       └── metrics.py       # 评估指标
 ├── config/
-│   └── finetune.yaml        # Finetune 配置参考
+│   ├── finetune.yaml        # Finetune 配置参考
+│   └── evaluate.yaml        # Evaluate 配置参考
 └── scripts/
-    └── run_finetune.sh      # Finetune 运行脚本
+    ├── run_finetune.sh      # Finetune 运行脚本
+    └── run_evaluate.sh      # Evaluate 运行脚本
 ```
 
 ## 功能模块
@@ -60,6 +66,10 @@ python src/finetune.py \
 ### 2. Unlearning Baselines
 
 提供多种 unlearning 方法，详见 `src/baselines/README.md`。
+
+### 3. Evaluate（评估）
+
+用于评估 unlearning 的效果，包括遗忘质量和模型实用性。
 
 #### 支持的方法
 
@@ -114,6 +124,34 @@ python src/baselines/main.py \
   --output_dir outputs/unlearn \
   --use_lora
 ```
+
+### 4. 评估结果
+
+```bash
+python src/evaluate/main.py \
+  --model_path outputs/unlearn/checkpoint-1000 \
+  --forget_data_path data/forget.jsonl \
+  --retain_data_path data/retain.jsonl \
+  --output_dir outputs/eval_results \
+  --eval_forget \
+  --eval_utility \
+  --eval_probability
+```
+
+#### 评估指标
+
+**Forget Quality（遗忘质量）**：
+- ROUGE-1/L Recall（越低越好，表示模型无法生成原始答案）
+- BLEU（越低越好）
+- Perplexity
+
+**Model Utility（模型实用性）**：
+- ROUGE-1/L Recall（越高越好，表示模型仍能正确回答保留集问题）
+- BLEU（越高越好）
+- Perplexity（越低越好）
+
+**Probability（概率）**：
+- 模型对遗忘集和保留集的平均概率
 
 ## 配置说明
 

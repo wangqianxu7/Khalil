@@ -1,0 +1,24 @@
+# 评估配置文件
+# 注意：此文件仅作为参考，实际使用 argparse 命令行参数
+
+# 模型配置
+model_path: "outputs/unlearn/checkpoint-1000"  # 模型路径
+tokenizer_path: null                            # Tokenizer 路径（如果与 model_path 不同）
+use_lora: false                                 # 是否使用 LoRA
+lora_path: null                                 # LoRA 适配器路径
+
+# 数据配置
+forget_data_path: "data/forget.jsonl"          # 遗忘集数据路径
+retain_data_path: "data/retain.jsonl"          # 保留集数据路径
+
+# 评估配置
+output_dir: "outputs/eval_results"              # 输出目录
+batch_size: 4                                   # 批次大小
+max_new_tokens: 128                             # 最大生成 token 数
+device: "cuda"                                  # 设备
+
+# 评估选项
+eval_forget: true                               # 评估遗忘质量
+eval_utility: true                              # 评估模型实用性
+eval_probability: true                          # 评估概率
+
