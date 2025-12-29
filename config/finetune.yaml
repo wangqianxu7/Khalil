@@ -1,0 +1,40 @@
+# Finetune 配置文件
+# 注意：此文件仅作为参考，实际使用 argparse 命令行参数
+# 可以通过脚本读取此文件并转换为命令行参数
+
+# 模型配置
+model_name: "meta-llama/Llama-2-7b-chat-hf"  # 基础模型名称或路径
+use_lora: true                                # 是否使用 LoRA
+lora_r: 8                                     # LoRA rank
+lora_alpha: 32                                # LoRA alpha
+lora_dropout: 0.05                            # LoRA dropout
+lora_target_modules: null                     # LoRA target modules（null 则自动查找）
+use_flash_attention: false                   # 是否使用 flash attention
+gradient_checkpointing: true                 # 是否启用梯度检查点
+
+# 数据配置
+data_path: "data/train.jsonl"                # 训练数据路径（JSON/JSONL）
+max_length: 512                               # 最大序列长度
+question_key: "question"                      # 问题字段名
+answer_key: "answer"                          # 答案字段名
+
+# 训练配置
+output_dir: "outputs/finetune"                # 输出目录
+lr: 1e-4                                      # 学习率
+batch_size: 4                                 # 批次大小
+gradient_accumulation_steps: 1                # 梯度累积步数
+num_epochs: 10                                # 训练轮数
+warmup_steps: null                            # 预热步数（null 则自动计算）
+weight_decay: 0.01                            # 权重衰减
+bf16: true                                    # 使用 bf16
+fp16: false                                   # 使用 fp16
+
+# 其他配置
+seed: 42                                      # 随机种子
+logging_steps: 50                             # 日志步数
+save_steps: null                              # 保存步数（null 则每轮保存一次）
+save_total_limit: 2                           # 保存的 checkpoint 数量限制
+merge_lora: true                              # 训练后是否合并 LoRA（保存完整模型）
+eval_strategy: "no"                           # 评估策略：no, steps, epoch
+eval_steps: null                              # 评估步数（如果 eval_strategy=steps）
+
