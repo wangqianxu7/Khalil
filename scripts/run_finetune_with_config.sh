@@ -16,10 +16,10 @@ python src/finetune.py \
   --lora_alpha 32 \
   --lora_dropout 0.05 \
   --lr 1e-4 \
-  --batch_size 4 \
+  --batch_size 8 \
   --gradient_accumulation_steps 2 \
   --num_epochs 10 \
-  --weight_decay 0.01 \
+  --weight_decay 0 \
   --bf16 \
   --merge_lora \
   --seed 42
